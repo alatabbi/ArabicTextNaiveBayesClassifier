@@ -1,0 +1,100 @@
+﻿    @model ATNBC.ViewModel.JobVM
+    @{
+        ViewBag.Title = "Classifier";
+    }
+    <h2>Classifier</h2>
+
+  
+    <div class="container">
+
+        @using (Ajax.BeginForm("Run", "Home", new AjaxOptions { }))
+        {
+            @Html.AntiForgeryToken()
+
+            @Html.HiddenFor(model => model.ClientId, new { id = "clientId" })
+            <div class="form-group">
+                @Html.LabelFor(m => m.InputFolder, new { @class = "col-md-2 control-label" })
+                <div class="col-md-10">
+                    @Html.DropDownListFor(m => m.InputFolder, Model.InputList, "--Select One--", new { @class = "form-control", @id = "inputPath" })
+                    @Html.ValidationMessageFor(model => model.OutputFolder)
+                </div>
+                <br />
+                @Html.LabelFor(m => m.OutputFolder, new { @class = "col-md-2 control-label" })
+                <div class="col-md-10">
+                    @Html.TextBoxFor(m => m.OutputFolder, new { @class = "form-control", @id = "outputFolderName" })
+                    @Html.ValidationMessageFor(model => model.OutputFolder)
+                </div>
+                <br /><br />
+                <div class="col-md-2">
+                    <input type="submit" name="submit" id="startButton"  class="btn btn-default" value="Start" />
+                </div>
+        </div>
+        <br />
+        <div class="form-group">
+            <br /><br />
+            @Html.Label("Click the cancel button to cancel task at anytime", new { @class = "col-md-12 control-label" })
+
+            <div class="col-md-10">
+            </div>
+            <br /><br />
+            <div class="col-md-10">
+                <input type="submit"  name="submit" id="stopButton" class="btn btn-default" value="Stop" />
+            </div>
+        </div>
+        <br />
+        <div class="form-group">
+            <br />
+            <div id="progress"></div>
+            <br />
+            <div id="result">
+                @Html.Raw(Model.Message)
+            </div>
+            <br />
+        </div>
+        
+        <br />
+        }
+   </div>        
+        @section scripts {
+            @Scripts.Render("~/bundles/jqueryval")
+
+            <script src="~/Scripts/jquery.signalR-2.0.3.min.js"></script>
+            <script src="~/signalr/hubs"></script>
+            <script>
+                $(function () {
+                    var job = $.connection.jobHub;
+                    job.client.notifyProgress = function (message) {
+                        $('#progress').append('<li><strong>' + message + '</strong></li>');
+                    };
+
+                    job.client.notifyStart = function (message) {
+                        $('#progress').empty();
+                        $('#progress').append(message);
+                    };
+
+                    job.client.notifyEnd = function (message) {
+                        $('#progress').append(message);
+                    };
+
+                    job.client.notifyCancel = function (message) {
+                        $('#progress').append(message);
+                    };
+                    var promise;
+                    $.connection.hub.start().done(function () {
+                        $('#clientId').val($.connection.hub.id);
+
+                        $('#startButton').click(function () {
+                            $('#progress').empty();
+                            $('#result').empty();
+                        });
+
+                        $('#stopButton').click(function () {
+                            promise.abort();
+                        });
+
+
+                    });
+
+        });
+            </script>
+        }
